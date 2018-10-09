@@ -20,7 +20,7 @@
     "watchify": "^3.11.0"
   },
   "dependencies": {
-    "express": "^4.16.3",
-    "verovio-dev": "^2.0.0-39"
+    "abcjs": "^5.3.2",
+    "express": "^4.16.3"
   }
 }
