@@ -6,12 +6,13 @@ type Link = {
 }
 
 const SCRAPBOXURL = "https://scrapbox.io/stk-study-music-theory/";
+const LINK_HIGHLIGHT_COLOR = "#3965ff";
 const inputEl = document.getElementById("abcinput");
 
 const parseLink = (abc: string): Link[] => {
     const parsedLinks: Link[] = [];
     const linkMached = abc.match(/%Links:.*/);
-    console.log("parseLink", "linkMatched", linkMached);
+    console.log("parseLink", "linkMatched", linkMached[0]);
     if (!linkMached) {
         return [];
     }
@@ -42,17 +43,13 @@ const onInput = () => {
 const addLinkToABC = (abc: string, startChar: number): string => {
     let updatedABC: string;
     if (abc.match(/(%Links:$|,$)/)) {
-        updatedABC = `${abc}${startChar} title`;
-    } else
-    //文末が%Links:.* -> `,#{startChar} title`
-    if (abc.match(/%Links:.+$/)) {
-        updatedABC = `${abc},${startChar} title`;
-    } else
-    //文末が\n -> `%Links:${startChar} title`
-    if (abc.match(/\n$/)) {
-        updatedABC = `${abc}%Links:${startChar} title`;
+        updatedABC = `${abc}${startChar} new`;
+    } else if (abc.match(/%Links:.+$/)) {
+        updatedABC = `${abc},${startChar} new`;
+    } else if (abc.match(/\n$/)) {
+        updatedABC = `${abc}%Links:${startChar} new`;
     } else {
-        updatedABC = `${abc}\n%Links:${startChar} title`;
+        updatedABC = `${abc}\n%Links:${startChar} new`;
     }
     return updatedABC;
 };
@@ -60,6 +57,9 @@ const addLinkToABC = (abc: string, startChar: number): string => {
 const generateClickListener = (inputEl: HTMLInputElement, links: Link[]) => {
     return (abcElem, tuneNumber, classes): void => {
         console.log("abcClickListener", abcElem, tuneNumber, classes);
+        //abcjsによる赤ハイライトを取り消す
+        abcElem.abselem.highlight(undefined, LINK_HIGHLIGHT_COLOR);
+
         const clickedNoteStartChar: number = abcElem.startChar;
         for (let link of links) {
             if (link.startChar === clickedNoteStartChar) {
@@ -72,7 +72,16 @@ const generateClickListener = (inputEl: HTMLInputElement, links: Link[]) => {
         const ABC = inputEl.value;
         inputEl.value = addLinkToABC(ABC, clickedNoteStartChar);
         onInput();
+
     };
+};
+
+const isLink = (links: Link[], startChar: string): boolean => {
+    for (let link of links) {
+        if (link.startChar === Number(startChar)) {
+            return true
+        }
+    }
 };
 
 const render = (abc: string, inputEl: HTMLInputElement, links: Link[]): void => {
@@ -81,12 +90,18 @@ const render = (abc: string, inputEl: HTMLInputElement, links: Link[]): void => 
         add_classes: true
     };
     const tuneObjectArray = abcjs.renderAbc("svgoutput", abc, options);
-    //スタイル適用
     console.log("render", "tuneObjectArray", tuneObjectArray);
-    tuneObjectArray[0].lines[0].staff[0].voices[1][13].abselem.highlight(undefined, "#0000FF");
-    //voicesをイテレート
-    //要素をイテレート
-    //startcharがlinkと同じものをハイライト
+
+    //リンクをハイライト
+    const voices = tuneObjectArray[0].lines[0].staff[0].voices;
+    for (let voice of voices) {
+        for (let element of voice) {
+            if (!element.startChar) continue;
+            if (isLink(links, element.startChar)) {
+                element.abselem.highlight(undefined, LINK_HIGHLIGHT_COLOR);
+            }
+        }
+    }
 };
 
 inputEl.addEventListener("input", onInput);
