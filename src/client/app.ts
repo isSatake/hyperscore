@@ -80,7 +80,13 @@ const render = (abc: string, inputEl: HTMLInputElement, links: Link[]): void => 
         clickListener: generateClickListener(inputEl, links),
         add_classes: true
     };
-    abcjs.renderAbc("svgoutput", abc, options);
+    const tuneObjectArray = abcjs.renderAbc("svgoutput", abc, options);
+    //スタイル適用
+    console.log("render", "tuneObjectArray", tuneObjectArray);
+    tuneObjectArray[0].lines[0].staff[0].voices[1][13].abselem.highlight(undefined, "#0000FF");
+    //voicesをイテレート
+    //要素をイテレート
+    //startcharがlinkと同じものをハイライト
 };
 
 inputEl.addEventListener("input", onInput);
