@@ -8,6 +8,7 @@ type Link = {
 const SCRAPBOXURL = "https://scrapbox.io/stk-study-music-theory/";
 const LINK_HIGHLIGHT_COLOR = "#3965ff";
 const inputEl = document.getElementById("abcinput");
+let shifted: boolean = false;
 
 const parseLink = (abc: string): Link[] => {
     const parsedLinks: Link[] = [];
@@ -43,15 +44,19 @@ const onInput = () => {
 };
 
 const addLinkToABC = (abc: string, startChar: number): string => {
-    let updatedABC: string;
-    if (abc.match(/%Links:.*$/)) {
-        updatedABC = `${abc}[${startChar} new]`;
-    } else if (abc.match(/\n$/)) {
-        updatedABC = `${abc}%Links:[${startChar} new]`;
-    } else {
-        updatedABC = `${abc}\n%Links:[${startChar} new]`;
+    if (shifted) {
+        const splitted = abc.split("]");
+        const tail = splitted[splitted.length - 2];
+        const updatedTail = tail.replace("[", `[${startChar},`);
+        return abc.replace(tail, updatedTail);
     }
-    return updatedABC;
+    if (/%Links:($|\[(.*|)\d+ .*]$)/.test(abc)) {
+        return `${abc}[${startChar} new]`;
+    }
+    if (/\n$/.test(abc)) {
+        return `${abc}%Links:[${startChar} new]`;
+    }
+    return `${abc}\n%Links:[${startChar} new]`;
 };
 
 const generateClickListener = (inputEl: HTMLInputElement, links: Link[]) => {
@@ -106,4 +111,8 @@ const render = (abc: string, inputEl: HTMLInputElement, links: Link[]): void => 
     }
 };
 
+window.addEventListener("mousedown", e => {
+    console.log("onmousedown", "shifted:", e.shiftKey);
+    shifted = e.shiftKey
+});
 inputEl.addEventListener("input", onInput);
