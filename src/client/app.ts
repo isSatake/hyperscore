@@ -1,7 +1,7 @@
 import * as abcjs from "abcjs";
 
 type Link = {
-    startChar: number,
+    startChars: number[],
     pageTitle: string
 }
 
@@ -27,7 +27,9 @@ const parseLink = (abc: string): Link[] => {
         link = link.replace("[", "");
         const arr = link.split(" ");
         if (arr.length < 2) continue;
-        parsedLinks.push({startChar: Number(arr[0]), pageTitle: arr[1]});
+        const numbersStr: string[] = arr[0].split(",");
+        const numbers: number[] = numbersStr.map(str => Number(str));
+        parsedLinks.push({startChars: numbers, pageTitle: arr[1]});
     }
 
     console.log("parseLink", "parsedLinks", parsedLinks);
@@ -59,12 +61,11 @@ const generateClickListener = (inputEl: HTMLInputElement, links: Link[]) => {
         abcElem.abselem.highlight(undefined, LINK_HIGHLIGHT_COLOR);
 
         const clickedNoteStartChar: number = abcElem.startChar;
-        for (let link of links) {
-            if (link.startChar === clickedNoteStartChar) {
-                console.log("abcClickListener", "Linked note is clicked.", "startChar:", link.startChar);
-                window.open(SCRAPBOXURL + link.pageTitle);
-                return
-            }
+        const pageTitle: string | null = getLink(links, clickedNoteStartChar);
+        if (pageTitle) {
+            console.log("abcClickListener", "Linked note is clicked.", "startChar:", clickedNoteStartChar, "destination:", pageTitle);
+            window.open(SCRAPBOXURL + pageTitle);
+            return
         }
 
         const ABC = inputEl.value;
@@ -74,12 +75,15 @@ const generateClickListener = (inputEl: HTMLInputElement, links: Link[]) => {
     };
 };
 
-const isLink = (links: Link[], startChar: string): boolean => {
+const getLink = (links: Link[], startChar: number): string | null => {
     for (let link of links) {
-        if (link.startChar === Number(startChar)) {
-            return true
+        for (let _startChar of link.startChars) {
+            if (_startChar === startChar) {
+                return link.pageTitle
+            }
         }
     }
+    return null
 };
 
 const render = (abc: string, inputEl: HTMLInputElement, links: Link[]): void => {
@@ -95,7 +99,7 @@ const render = (abc: string, inputEl: HTMLInputElement, links: Link[]): void => 
     for (let voice of voices) {
         for (let element of voice) {
             if (!element.startChar) continue;
-            if (isLink(links, element.startChar)) {
+            if (getLink(links, Number(element.startChar))) {
                 element.abselem.highlight(undefined, LINK_HIGHLIGHT_COLOR);
             }
         }
