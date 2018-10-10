@@ -1,32 +1,62 @@
 import * as abcjs from "abcjs";
 
+type Link = {
+    startChar: number,
+    pageTitle: string
+}
+
 const SCRAPBOXURL = "https://scrapbox.io/stk-study-music-theory/";
+const inputEl = document.getElementById("abcinput");
 
-const abcClickListener = (abcElem, tuneNumber, classes) => {
-    console.log("abcClickListener", abcElem, tuneNumber, classes);
-
-    if (abcElem.el_type) {
-        if (abcElem.startChar === 153) {
-            window.open(SCRAPBOXURL + "middle C")
-        }
-    } else {
-        if(abcElem.type === "treble"){
-            window.open(SCRAPBOXURL + "treble clef")
-        }
-        if(abcElem.type === "common_time"){
-            window.open(SCRAPBOXURL + "common_time")
-        }
+const parseLink = (abc: string): Link[] => {
+    const parsedLinks: Link[] = [];
+    const linkMached = abc.match(/%Links:.*/);
+    console.log("parseLink", "linkMatched", linkMached);
+    if (!linkMached) {
+        return [];
     }
+
+    const linkStr = linkMached[0].replace(/%Links:/, "");
+    const links = linkStr.split(",");
+    console.log("parseLink", "links", links);
+    if (links.length < 1) {
+        return [];
+    }
+
+    for (let link of links) {
+        const arr = link.split(" ");
+        if(arr.length < 2) continue;
+        parsedLinks.push({startChar: Number(arr[0]), pageTitle: arr[1]});
+    }
+
+    console.log("parseLink", "parsedLinks", parsedLinks);
+    return parsedLinks;
 };
 
-const ABC: string = (
-    "M:C\n" +
-    "%%score (A B)\n" +
-    "[V:A] [bcg]4 cd a2 | [Gdg]2 B2 ed c2 | [cdg]2 f[(c(e] [c)e)]c d2 | [Gce]2 d2 [Bdg]4 | [V:B] A,3 (A,A,4) | E,3 (E,E,4) | F,4 (F,4 | F,) (C3 C)D G2 |"
-);
-
-const options = {
-    clickListener: abcClickListener,
-    add_classes: true
+const generateClickListener = (links: Link[]) => {
+    return (abcElem, tuneNumber, classes) => {
+        console.log("abcClickListener", abcElem, tuneNumber, classes);
+        if (!abcElem.el_type || !links.length) {
+            return
+        }
+        for (let link of links) {
+            if (link.startChar === abcElem.startChar) {
+                console.log("abcClickListener", "Linked note is clicked.", "startChar:", link.startChar);
+                window.open(SCRAPBOXURL + link.pageTitle);
+            }
+        }
+    };
 };
-abcjs.renderAbc("svgoutput", ABC, options);
+
+const render = (abc: string, links: Link[]): void => {
+    const options = {
+        clickListener: generateClickListener(links),
+        add_classes: true
+    };
+    abcjs.renderAbc("svgoutput", abc, options);
+};
+
+inputEl.addEventListener("input", e => {
+    const ABC: string = (e.target as HTMLInputElement).value;
+    render(ABC, parseLink(ABC));
+});
