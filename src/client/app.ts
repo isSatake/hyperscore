@@ -25,7 +25,7 @@ const parseLink = (abc: string): Link[] => {
 
     for (let link of links) {
         const arr = link.split(" ");
-        if(arr.length < 2) continue;
+        if (arr.length < 2) continue;
         parsedLinks.push({startChar: Number(arr[0]), pageTitle: arr[1]});
     }
 
@@ -33,30 +33,54 @@ const parseLink = (abc: string): Link[] => {
     return parsedLinks;
 };
 
-const generateClickListener = (links: Link[]) => {
-    return (abcElem, tuneNumber, classes) => {
+const onInput = () => {
+    console.log("inputEl", "oninput");
+    const ABC: string = (inputEl as HTMLInputElement).value;
+    render(ABC, inputEl as HTMLInputElement, parseLink(ABC));
+};
+
+const addLinkToABC = (abc: string, startChar: number): string => {
+    let updatedABC: string;
+    if (abc.match(/(%Links:$|,$)/)) {
+        updatedABC = `${abc}${startChar} title`;
+    } else
+    //文末が%Links:.* -> `,#{startChar} title`
+    if (abc.match(/%Links:.+$/)) {
+        updatedABC = `${abc},${startChar} title`;
+    } else
+    //文末が\n -> `%Links:${startChar} title`
+    if (abc.match(/\n$/)) {
+        updatedABC = `${abc}%Links:${startChar} title`;
+    } else {
+        updatedABC = `${abc}\n%Links:${startChar} title`;
+    }
+    return updatedABC;
+};
+
+const generateClickListener = (inputEl: HTMLInputElement, links: Link[]) => {
+    return (abcElem, tuneNumber, classes): void => {
         console.log("abcClickListener", abcElem, tuneNumber, classes);
-        if (!abcElem.el_type || !links.length) {
-            return
-        }
+        const clickedNoteStartChar: number = abcElem.startChar;
         for (let link of links) {
-            if (link.startChar === abcElem.startChar) {
+            if (link.startChar === clickedNoteStartChar) {
                 console.log("abcClickListener", "Linked note is clicked.", "startChar:", link.startChar);
                 window.open(SCRAPBOXURL + link.pageTitle);
+                return
             }
         }
+
+        const ABC = inputEl.value;
+        inputEl.value = addLinkToABC(ABC, clickedNoteStartChar);
+        onInput();
     };
 };
 
-const render = (abc: string, links: Link[]): void => {
+const render = (abc: string, inputEl: HTMLInputElement, links: Link[]): void => {
     const options = {
-        clickListener: generateClickListener(links),
+        clickListener: generateClickListener(inputEl, links),
         add_classes: true
     };
     abcjs.renderAbc("svgoutput", abc, options);
 };
 
-inputEl.addEventListener("input", e => {
-    const ABC: string = (e.target as HTMLInputElement).value;
-    render(ABC, parseLink(ABC));
-});
+inputEl.addEventListener("input", onInput);
