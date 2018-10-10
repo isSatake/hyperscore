@@ -18,13 +18,13 @@ const parseLink = (abc: string): Link[] => {
     }
 
     const linkStr = linkMached[0].replace(/%Links:/, "");
-    const links = linkStr.split(",");
-    console.log("parseLink", "links", links);
+    const links = linkStr.split("]");
     if (links.length < 1) {
         return [];
     }
 
     for (let link of links) {
+        link = link.replace("[", "");
         const arr = link.split(" ");
         if (arr.length < 2) continue;
         parsedLinks.push({startChar: Number(arr[0]), pageTitle: arr[1]});
@@ -42,14 +42,12 @@ const onInput = () => {
 
 const addLinkToABC = (abc: string, startChar: number): string => {
     let updatedABC: string;
-    if (abc.match(/(%Links:$|,$)/)) {
-        updatedABC = `${abc}${startChar} new`;
-    } else if (abc.match(/%Links:.+$/)) {
-        updatedABC = `${abc},${startChar} new`;
+    if (abc.match(/%Links:.*$/)) {
+        updatedABC = `${abc}[${startChar} new]`;
     } else if (abc.match(/\n$/)) {
-        updatedABC = `${abc}%Links:${startChar} new`;
+        updatedABC = `${abc}%Links:[${startChar} new]`;
     } else {
-        updatedABC = `${abc}\n%Links:${startChar} new`;
+        updatedABC = `${abc}\n%Links:[${startChar} new]`;
     }
     return updatedABC;
 };
