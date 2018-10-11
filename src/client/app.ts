@@ -13,10 +13,10 @@ let shifted: boolean = false;
 const parseLink = (abc: string): Link[] => {
     const parsedLinks: Link[] = [];
     const linkMached = abc.match(/%Links:.*/);
-    console.log("parseLink", "linkMatched", linkMached[0]);
     if (!linkMached) {
         return [];
     }
+    console.log("parseLink", "linkMatched", linkMached[0]);
 
     const linkStr = linkMached[0].replace(/%Links:/, "");
     const links = linkStr.split("]");
@@ -94,7 +94,8 @@ const getLink = (links: Link[], startChar: number): string | null => {
 const render = (abc: string, inputEl: HTMLInputElement, links: Link[]): void => {
     const options = {
         clickListener: generateClickListener(inputEl, links),
-        add_classes: true
+        add_classes: true,
+        staffwidth: 1024
     };
     const tuneObjectArray = abcjs.renderAbc("svgoutput", abc, options);
     console.log("render", "tuneObjectArray", tuneObjectArray);
@@ -116,3 +117,4 @@ window.addEventListener("mousedown", e => {
     shifted = e.shiftKey
 });
 inputEl.addEventListener("input", onInput);
+onInput();
