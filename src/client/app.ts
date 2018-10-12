@@ -1,4 +1,4 @@
-import * as abcjs from "abcjs";
+import * as abcjs from "abcjs/midi";
 
 type Link = {
     startChars: number[],
@@ -110,6 +110,8 @@ const render = (abc: string, inputEl: HTMLInputElement, links: Link[]): void => 
             }
         }
     }
+
+    abcjs.renderMidi("midioutput", abc, {inlineControls: {loopToggle: true,}});
 };
 
 window.addEventListener("mousedown", e => {
